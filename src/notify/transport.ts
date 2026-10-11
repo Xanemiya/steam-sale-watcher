@@ -27,6 +27,21 @@ export async function sendToTarget(target: Target, items: SaleItem[]) {
   // Bot mode
   const client = await getClient();
   const ch = await client.channels.fetch(target.channelId).catch(() => null);
-  if (!ch || (ch.type !== ChannelType.GuildText && !(ch as any).isTextBased?.())) return;
+
+  if (!ch) {
+    throw new Error(
+      `Discord channel ${target.channelId} not found or bot has no access to it`
+    );
+  }
+
+  if (
+    !(ch as any).isTextBased?.() ||
+    typeof (ch as any).send !== 'function'
+  ) {
+    throw new Error(
+      `Discord channel ${target.channelId} does not support messages`
+    );
+  }
+
   await (ch as any).send({ embeds: [embed] });
 }
