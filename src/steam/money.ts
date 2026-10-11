@@ -4,7 +4,10 @@ function isFreeish(text: string): boolean {
     t.includes("free") ||
     t.includes("kostenlos") ||
     t.includes("gratis") ||
-    t.includes("play for free")
+    t.includes("play for free") ||
+    t.includes("бесплатно") ||
+    t.includes("бесплатная игра") ||
+    t.includes("бесплатная")
   );
 }
 
