@@ -155,7 +155,7 @@ async function tickLegacy() {
 /* =========================
    Bot mode
    ========================= */
-let botCursor = 0;
+
 
 async function maybeStartBot() {
   const raw: any = await import('./bot.js').catch((e) => {
@@ -191,8 +191,7 @@ async function tickBot() {
     const maxYear = getChannelMaxYear?.(channel_id) ?? null;
     const minReviews = getChannelMinReviews?.(channel_id) ?? 0;
 
-    const slice = subs.slice(botCursor, botCursor + BATCH);
-    botCursor = (botCursor + BATCH) % subs.length;
+    const slice = subs;
 
     for (const sub of slice) {
       try {
