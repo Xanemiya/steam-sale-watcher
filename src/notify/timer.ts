@@ -22,11 +22,13 @@ export async function flushTarget(target: Target, opts?: { scope?: string }): Pr
 
 /** Flush ONE embed (up to EMBED_ITEMS items) per target per tick. */
 export async function flushQueues(): Promise<number> {
-  const results = await forEachTarget(async (target) => {
-    return await flushTarget(target);
+  let total = 0;
+
+  await forEachTarget(async (target) => {
+    total += await flushTarget(target);
   });
 
-  return results.reduce((total, count) => total + (count ?? 0), 0);
+  return total;
 
 }
 
