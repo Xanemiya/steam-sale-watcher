@@ -15,6 +15,9 @@ import {
   listAllChannelSubs,
   listDistinctChannels,
   getChannelMinReviews,
+  isChannelSeen,
+  markChannelSeen,
+  seedChannelSeenFromSubs,
 } from './db.js';
 
 import { notifyDiscordBatch, startNotifyTimer } from './notify/index.js';
@@ -175,6 +178,7 @@ async function maybeStartBot() {
 }
 
 async function tickBot() {
+  seedChannelSeenFromSubs();
   const channels = listDistinctChannels();
   if (!channels.length) {
     console.log('⚠️ No user subscriptions yet.');
@@ -207,7 +211,9 @@ async function tickBot() {
         const fresh: SaleItem[] = [];
         for (const it of filtered) {
           const h = hashSale(it.appid, it.discount, it.price);
-          if (!isSeen(sub.id, it.appid, h)) {
+
+          if (!isChannelSeen(channel_id, it.appid, h)) {
+            markChannelSeen(channel_id, it.appid, h);
             markSeen(sub.id, it.appid, h);
             fresh.push(it);
           }
