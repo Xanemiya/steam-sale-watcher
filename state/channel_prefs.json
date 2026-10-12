@@ -6,5 +6,13 @@
     "min_year": 2018,
     "max_year": null,
     "min_reviews": 5000
+  },
+  {
+    "channel_id": "1558887070724923412",
+    "min_discount": 75,
+    "max_price": null,
+    "min_year": 2018,
+    "max_year": null,
+    "min_reviews": 5000
   }
 ]
