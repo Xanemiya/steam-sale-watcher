@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { ChannelType } from 'discord.js';
 import { buildSingleEmbed } from './format.js';
 import type { Target, SaleItem } from './types.js';
 
