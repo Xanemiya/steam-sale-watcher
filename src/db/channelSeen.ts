@@ -38,3 +38,15 @@ export function clearChannelSeen(channelId: string): number {
   const res = stmtClearChannel.run(channelId);
   return res.changes ?? 0; // number of rows deleted
 }
+/** Copy existing per-subscription history into channel-level history. */
+export function seedChannelSeenFromSubs(): number {
+  const result = db.prepare(`
+    INSERT OR IGNORE INTO channel_seen_sales (channel_id, appid, sale_hash)
+    SELECT s.channel_id, ss.appid, ss.sale_hash
+    FROM seen_sales ss
+    JOIN subscriptions s ON s.id = ss.sub_id
+    WHERE s.channel_id IS NOT NULL
+  `).run();
+
+  return result.changes ?? 0;
+}
