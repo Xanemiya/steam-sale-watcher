@@ -8,13 +8,13 @@ permissions:
   actions: read
 
 concurrency:
-  group: steam-sale-watcher-manual
+  group: steam-sale-watcher
   cancel-in-progress: false
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -24,6 +24,7 @@ jobs:
         run: mkdir -p .data
 
       - name: Restore DB cache
+        id: cache-db
         uses: actions/cache/restore@v4
         with:
           path: .data/steam.db
@@ -31,16 +32,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-steam-db-v1-
 
+      - name: Show restored DB
+        run: |
+          if [ -f .data/steam.db ]; then
+            echo "Database restored or already present:"
+            ls -lh .data/steam.db
+          else
+            echo "No cached database found. A new database may be created."
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build
 
       - name: Run bot once
         env:
@@ -51,15 +61,19 @@ jobs:
           DB_FILE: ./.data/steam.db
         run: node dist/index.js
 
+      - name: Verify database exists
+        if: success()
+        run: test -f .data/steam.db
+
       - name: Save DB cache
-        if: always()
+        if: success()
         uses: actions/cache/save@v4
         with:
           path: .data/steam.db
           key: ${{ runner.os }}-steam-db-v1-${{ github.run_id }}
 
       - name: Upload DB backup
-        if: always()
+        if: always() && hashFiles('.data/steam.db') != ''
         uses: actions/upload-artifact@v4
         with:
           name: steam-db-manual-${{ github.run_id }}
