@@ -137,7 +137,7 @@ async function tickLegacy() {
 
       const fresh: SaleItem[] = [];
       for (const it of filtered) {
-        const saleHash = hashSale(it.appid, it.discount, it.price);
+        const saleHash = hashSale(it);
         if (!isSeen(sub.id!, it.appid, saleHash)) {
           markSeen(sub.id!, it.appid, saleHash);
           fresh.push(it);
