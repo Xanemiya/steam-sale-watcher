@@ -93,7 +93,7 @@ export async function processTagSub(sub: Sub, opts?: ProcessOpts) {
   // Deduplicate against seen_sales
   const fresh: SaleItem[] = [];
   for (const it of filtered) {
-    const saleHash = hashSale(it.appid, it.discount, it.price);
+    const saleHash = hashSale(it);
     if (!isSeen(sub.id, it.appid, saleHash)) {
       // ✅ use plain function (not .run) for consistency with refactor
       markSeen(sub.id, it.appid, saleHash);
