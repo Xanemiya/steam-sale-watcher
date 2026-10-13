@@ -68,3 +68,14 @@ export function requeueFront(key: string, picked: Queued[]) {
   const back = queue.get(key) ?? [];
   queue.set(key, picked.concat(back));
 }
+
+/** Total number of queued notifications across all targets. */
+export function pendingQueueCount(): number {
+  let total = 0;
+
+  for (const items of queue.values()) {
+    total += items.length;
+  }
+
+  return total;
+}
