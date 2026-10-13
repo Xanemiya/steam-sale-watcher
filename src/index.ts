@@ -236,34 +236,45 @@ async function tickBot() {
    MAIN
    ========================= */
 (async () => {
-  try {
-    // Start the notify flusher (moved out of notify module side-effects)
-    startNotifyTimer();
+  let botClient: any = null;
 
+  try {
     if (MODE_BOT) {
       await maybeStartBot();
-      void tickBot(); // don’t block startup
+
+      const botModule: any = await import('./bot.js');
+      botClient = botModule.client ?? botModule.default?.client;
+
+      await tickBot();
     } else {
       await maybeLegacySeed();
-      void tickLegacy();
+      await tickLegacy();
     }
 
-    setInterval(() => {
-      void (MODE_BOT ? tickBot() : tickLegacy());
-    }, POLL * 1000);
+    // Send queued notifications before the process exits.
+    const sent = await flushQueues();
+    console.log(`📨 Notification flush completed: ${sent} items sent.`);
 
-    console.log(
-      `🚀 Steam Sale Watcher running every ${POLL}s | batch=${BATCH} | delay=${REQ_DELAY_MS}ms | mode=${
-        MODE_BOT ? 'bot' : 'legacy'
-      }`
-    );
+    // Persist SQLite WAL changes in the main database file.
+    const { db } = await import('./db.js');
+    db.pragma('wal_checkpoint(TRUNCATE)');
+
+    if (botClient?.isReady()) {
+      botClient.destroy();
+    }
+
+    db.close();
+    console.log('✅ One-shot run completed.');
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.error('❌ Fatal startup error:', err.stack || err.message);
-    } else {
-      console.error('❌ Fatal startup error (non-error):', err);
-    }
-    process.exit(1);
+    console.error('❌ Fatal run error:', err);
+
+    try {
+      if (botClient?.isReady()) {
+        botClient.destroy();
+      }
+    } catch {}
+
+    process.exitCode = 1;
   }
 })();
 
