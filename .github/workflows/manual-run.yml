@@ -8,7 +8,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: steam-sale-watcher
+  group: steam-sale-watcher-bot
   cancel-in-progress: false
 
 jobs:
