@@ -20,7 +20,7 @@ import {
   seedChannelSeenFromSubs,
 } from './db.js';
 
-import { notifyDiscordBatch, startNotifyTimer } from './notify/index.js';
+import { notifyDiscordBatch, flushQueues } from './notify/index.js';
 import { passesMinReviews } from './discord/filters.js';
 
 /* =========================
