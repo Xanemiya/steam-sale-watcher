@@ -119,7 +119,7 @@ export async function handleSubscribe(inter: ChatInputCommandInteraction) {
 
     const fresh: SaleItem[] = [];
     for (const it of filtered) {
-      const h = hashSale(it.appid, it.discount, it.price);
+      const h = hashSale(it);
       if (!isSeen(subId, it.appid, h) && !isChannelSeen(channelId, it.appid, h)) {
         markSeen(subId, it.appid, h);
         markChannelSeen(channelId, it.appid, h);
