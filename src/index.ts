@@ -237,44 +237,64 @@ async function tickBot() {
    ========================= */
 (async () => {
   let botClient: any = null;
+  let dbRef: any = null;
+  let exitCode = 0;
 
   try {
     if (MODE_BOT) {
-      await maybeStartBot();
-
+      // Import once, keep the client reference for reliable cleanup.
       const botModule: any = await import('./bot.js');
       botClient = botModule.client ?? botModule.default?.client;
 
+      await maybeStartBot();
       await tickBot();
     } else {
       await maybeLegacySeed();
       await tickLegacy();
     }
 
-    // Send queued notifications before the process exits.
+    // Send every queued batch before exiting.
     const sent = await flushQueues();
     console.log(`📨 Notification flush completed: ${sent} items sent.`);
 
-    // Persist SQLite WAL changes in the main database file.
-    const { db } = await import('./db.js');
-    db.pragma('wal_checkpoint(TRUNCATE)');
+    // Checkpoint the SQLite WAL only after successful processing and sending.
+    const dbModule = await import('./db.js');
+    dbRef = dbModule.db;
+    dbRef.pragma('wal_checkpoint(TRUNCATE)');
 
-    if (botClient?.isReady()) {
-      botClient.destroy();
-    }
-
-    db.close();
     console.log('✅ One-shot run completed.');
   } catch (err: unknown) {
     console.error('❌ Fatal run error:', err);
-
+    exitCode = 1;
+  } finally {
+    // Always attempt to stop the Discord client.
     try {
-      if (botClient?.isReady()) {
+      if (botClient) {
         botClient.destroy();
+        console.log('🔌 Discord client closed.');
       }
-    } catch {}
+    } catch (e) {
+      console.error('⚠️ Failed to close Discord client:', e);
+      exitCode = 1;
+    }
 
-    process.exitCode = 1;
+    // Close SQLite even when processing or sending fails.
+    try {
+      if (!dbRef) {
+        const dbModule = await import('./db.js');
+        dbRef = dbModule.db;
+      }
+
+      if (dbRef?.open) {
+        dbRef.close();
+        console.log('🗄️ SQLite database closed.');
+      }
+    } catch (e) {
+      console.error('⚠️ Failed to close SQLite database:', e);
+      exitCode = 1;
+    }
+
+    process.exitCode = exitCode;
   }
 })();
 
