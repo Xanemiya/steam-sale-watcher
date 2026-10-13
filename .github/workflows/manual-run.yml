@@ -1,0 +1,67 @@
+name: Manual Steam Sale Watcher
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: steam-sale-watcher-manual
+  cancel-in-progress: false
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure DB directory
+        run: mkdir -p .data
+
+      - name: Restore DB cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .data/steam.db
+          key: ${{ runner.os }}-steam-db-v1-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-steam-db-v1-
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Run bot once
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_APP_ID: ${{ secrets.DISCORD_APP_ID }}
+          STEAM_REGION: ${{ secrets.STEAM_REGION }}
+          STEAM_LANG: ${{ secrets.STEAM_LANG }}
+          DB_FILE: ./.data/steam.db
+        run: node dist/index.js
+
+      - name: Save DB cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .data/steam.db
+          key: ${{ runner.os }}-steam-db-v1-${{ github.run_id }}
+
+      - name: Upload DB backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: steam-db-manual-${{ github.run_id }}
+          path: .data/steam.db
+          retention-days: 7
