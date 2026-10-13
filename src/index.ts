@@ -224,7 +224,7 @@ async function tickBot() {
 
         const fresh: SaleItem[] = [];
         for (const it of filtered) {
-          const h = hashSale(it.appid, it.discount, it.price);
+          const h = hashSale(it);
 
           if (!isChannelSeen(channel_id, it.appid, h)) {
             markChannelSeen(channel_id, it.appid, h);
