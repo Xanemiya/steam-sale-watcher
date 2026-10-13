@@ -6,8 +6,10 @@ import 'dotenv/config';
 
 import type { SaleItem } from './steam.js';
 import { fetchTagSpecials, hashSale } from './steam.js';
+import { db } from './db.js';
 
 import {
+  db,
   insertSub,
   listSubs,
   isSeen,
@@ -179,6 +181,19 @@ async function maybeStartBot() {
 
 async function tickBot() {
   seedChannelSeenFromSubs();
+
+  const seenSalesCount = (
+    db.prepare('SELECT COUNT(*) AS count FROM seen_sales').get() as { count: number }
+  ).count;
+
+  const channelSeenCount = (
+    db.prepare('SELECT COUNT(*) AS count FROM channel_seen_sales').get() as { count: number }
+  ).count;
+
+  console.log(
+    `🧾 Deduplication database counts: seen_sales=${seenSalesCount}, channel_seen_sales=${channelSeenCount}`,
+  );
+
   const channels = listDistinctChannels();
   if (!channels.length) {
     console.log('⚠️ No user subscriptions yet.');
