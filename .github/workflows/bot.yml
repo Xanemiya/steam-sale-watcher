@@ -66,7 +66,7 @@ jobs:
 
       # Save an updated DB under a unique key for this run
       - name: Save DB cache
-        if: always()
+        if: success()
         uses: actions/cache/save@v4
         with:
           path: .data/steam.db
