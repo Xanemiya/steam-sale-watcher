@@ -6,7 +6,6 @@ import 'dotenv/config';
 
 import type { SaleItem } from './steam.js';
 import { fetchTagSpecials, hashSale } from './steam.js';
-import { db } from './db.js';
 
 import {
   db,
